@@ -1,6 +1,6 @@
 # Opinion Analysis — Subjectivity Detection in Peer Reviews
 
-A research project comparing rule-based and ML-based approaches to detecting subjective language in academic peer reviews, using data collected from the OpenReview platform.
+This small-scale experimental research project provides tools for extracting subjective language from academic peer reviews and compares model performance on binary sentence classification (objective vs. subjective) using OpenReview-sourced data.
 
 ---
 
