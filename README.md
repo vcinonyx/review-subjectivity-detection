@@ -34,7 +34,7 @@ Opinion_Analysis/
 
 ### `data/eval_dataset.csv`
 
-The evaluation dataset collected from ICLR 2026 peer reviews via the OpenReview API. It contains sentences classified as either **subjective** or **objective**. Subjective sentences are those that contain at least one of a predefined set of linguistic markers (e.g. hedges, reviewer beliefs, evaluative language). Objective sentences are those with no match against these keyword patterns. Columns include: `paper_id`, `paper_title`, `reviewer`, `field`, `sentence`, `matched_markers`, and `label`.
+The evaluation dataset collected from ICLR 2026 peer reviews via the OpenReview API. It contains sentences classified as either **subjective** or **objective**. Subjective sentences are those that contain at least one of a predefined set of linguistic markers (e.g. hedges, reviewer beliefs, evaluative language). Objective sentences are those with no match against these keyword patterns. Columns include: `field`, `sentence`, `matched_markers`, and `label`.
 
 ### `data/test_dataset.csv`
 
