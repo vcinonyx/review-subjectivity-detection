@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pull Reviews – Subjectivity Analyzer</title>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f8f9fa;
+      color: #212529;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── header / nav ─────────────────────────────────────────────────────── */
+    header {
+      background: #1e293b;
+      color: #f1f5f9;
+      padding: .75rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -.3px;
+      flex: 1;
+    }
+
+    nav {
+      display: flex;
+      gap: .25rem;
+    }
+
+    nav a {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: .82rem;
+      padding: .3rem .7rem;
+      border-radius: 5px;
+      transition: background .15s, color .15s;
+    }
+
+    nav a:hover {
+      background: #334155;
+      color: #f1f5f9;
+    }
+
+    nav a.active {
+      background: #3b82f6;
+      color: #fff;
+    }
+
+    /* ── layout ───────────────────────────────────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 1.5rem;
+      padding: 1.5rem 2rem;
+      flex: 1;
+      align-items: start;
+    }
+
+    @media (max-width: 860px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ── config sidebar ───────────────────────────────────────────────────── */
+    .config {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+      position: sticky;
+      top: 1.5rem;
+    }
+
+    .panel-header {
+      padding: .7rem 1rem;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: .75rem;
+      font-weight: 600;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      background: #f8fafc;
+    }
+
+    .config-body {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+    }
+
+    label {
+      font-size: .82rem;
+      font-weight: 500;
+      color: #374151;
+      display: block;
+      margin-bottom: .25rem;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    input[type="email"] {
+      width: 100%;
+      padding: .45rem .6rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: .85rem;
+      font-family: inherit;
+      color: #111827;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    input:focus {
+      border-color: #3b82f6;
+    }
+
+    .hint {
+      font-size: .72rem;
+      color: #9ca3af;
+      margin-top: .2rem;
+    }
+
+    details summary {
+      font-size: .8rem;
+      font-weight: 500;
+      color: #475569;
+      cursor: pointer;
+      user-select: none;
+      padding: .3rem 0;
+    }
+
+    details[open] summary {
+      color: #1e293b;
+    }
+
+    .details-body {
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+      margin-top: .5rem;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: .5rem;
+      padding-top: .25rem;
+    }
+
+    button {
+      padding: .45rem 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: .84rem;
+      font-weight: 500;
+      transition: opacity .15s;
+    }
+
+    button:hover:not(:disabled) {
+      opacity: .85;
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    #pullBtn {
+      background: #3b82f6;
+      color: #fff;
+      flex: 1;
+    }
+
+    #stopBtn {
+      background: #f1f5f9;
+      color: #475569;
+      display: none;
+    }
+
+    /* ── right pane ───────────────────────────────────────────────────────── */
+    .right {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* ── progress card ────────────────────────────────────────────────────── */
+    .progress-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-header {
+      padding: .7rem 1rem;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+      font-size: .75rem;
+      font-weight: 600;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+
+    progress {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      appearance: none;
+      -webkit-appearance: none;
+      overflow: hidden;
+    }
+
+    progress::-webkit-progress-bar {
+      background: #e2e8f0;
+      border-radius: 3px;
+    }
+
+    progress::-webkit-progress-value {
+      background: #3b82f6;
+      border-radius: 3px;
+    }
+
+    progress::-moz-progress-bar {
+      background: #3b82f6;
+    }
+
+    #progressPct {
+      font-size: .75rem;
+      color: #64748b;
+      white-space: nowrap;
+    }
+
+    #log {
+      padding: .6rem 1rem;
+      font-size: .75rem;
+      font-family: "SF Mono", "Fira Code", monospace;
+      color: #475569;
+      max-height: 140px;
+      overflow-y: auto;
+      line-height: 1.55;
+    }
+
+    .log-error {
+      color: #ef4444;
+    }
+
+    .log-done {
+      color: #22c55e;
+      font-weight: 600;
+    }
+
+    /* ── summary stats ────────────────────────────────────────────────────── */
+    #summaryBar {
+      display: none;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: .8rem 1.2rem;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-block {
+      text-align: center;
+    }
+
+    .stat-block .num {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .stat-block .lbl {
+      font-size: .72rem;
+      color: #94a3b8;
+      margin-top: .1rem;
+    }
+
+    /* ── legend ───────────────────────────────────────────────────────────── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .35rem .8rem;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: .65rem 1rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      font-size: .73rem;
+      color: #475569;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .dot.author_claim {
+      background: #a78bfa;
+    }
+
+    .dot.reviewer_belief {
+      background: #fde047;
+    }
+
+    .dot.positive {
+      background: #4ade80;
+    }
+
+    .dot.negative {
+      background: #f87171;
+    }
+
+    .dot.positioning {
+      background: #38bdf8;
+    }
+
+    .dot.hedging {
+      background: #fb923c;
+    }
+
+    .dot.enthusiasm {
+      background: #e879f9;
+    }
+
+    /* ── results ──────────────────────────────────────────────────────────── */
+    #results {
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+    }
+
+    .paper-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .paper-title-row {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .75rem 1rem;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid transparent;
+      transition: background .12s;
+    }
+
+    .paper-title-row:hover {
+      background: #f8fafc;
+    }
+
+    .paper-title-row.open {
+      border-bottom-color: #e2e8f0;
+    }
+
+    .chevron {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      color: #94a3b8;
+      transition: transform .2s;
+    }
+
+    .chevron.open {
+      transform: rotate(90deg);
+    }
+
+    .paper-title {
+      font-size: .9rem;
+      font-weight: 600;
+      color: #1e293b;
+      flex: 1;
+    }
+
+    .paper-badge {
+      flex-shrink: 0;
+      font-size: .7rem;
+      background: #eff6ff;
+      color: #3b82f6;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: .15rem .55rem;
+      white-space: nowrap;
+    }
+
+    .paper-badge.zero {
+      background: #f1f5f9;
+      color: #94a3b8;
+      border-color: #e2e8f0;
+    }
+
+    .paper-body {
+      display: none;
+      padding: .75rem 1rem;
+    }
+
+    .paper-body.open {
+      display: block;
+    }
+
+    .reviewer-block {
+      margin-bottom: .9rem;
+    }
+
+    .reviewer-name {
+      font-size: .74rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: .4rem;
+    }
+
+    .field-block {
+      margin-bottom: .5rem;
+    }
+
+    .field-label {
+      font-size: .7rem;
+      color: #94a3b8;
+      font-style: italic;
+      margin-bottom: .2rem;
+    }
+
+    /* ── sentence / mark styles ───────────────────────────────────────────── */
+    .sentence {
+      line-height: 1.7;
+      font-size: .87rem;
+      margin-bottom: .3rem;
+      display: block;
+    }
+
+    .sentence-subj {
+      background: #fefce8;
+      border-left: 3px solid #fbbf24;
+      padding: .1rem .4rem .1rem .5rem;
+      border-radius: 0 4px 4px 0;
+    }
+
+    mark {
+      border-radius: 3px;
+      padding: 0 2px;
+      font-weight: 600;
+      cursor: default;
+    }
+
+    mark.author_claim {
+      background: #ddd6fe;
+      color: #5b21b6;
+    }
+
+    mark.reviewer_belief {
+      background: #fef08a;
+      color: #854d0e;
+    }
+
+    mark.positive {
+      background: #bbf7d0;
+      color: #14532d;
+    }
+
+    mark.negative {
+      background: #fecaca;
+      color: #7f1d1d;
+    }
+
+    mark.positioning {
+      background: #bae6fd;
+      color: #0c4a6e;
+    }
+
+    mark.hedging {
+      background: #fed7aa;
+      color: #7c2d12;
+    }
+
+    mark.enthusiasm {
+      background: #f5d0fe;
+      color: #701a75;
+    }
+
+    .empty-results {
+      text-align: center;
+      color: #94a3b8;
+      font-size: .88rem;
+      padding: 3rem 1rem;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+    }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #bfdbfe;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>Subjectivity Analyzer</h1>
+    <nav>
+      <a href="/">Analyze Text</a>
+      <a href="/reviews" class="active">Pull Reviews</a>
+    </nav>
+  </header>
+
+  <div class="layout">
+
+    <!-- ── Config sidebar ──────────────────────────────────────────────── -->
+    <aside class="config">
+      <div class="panel-header">Conference settings</div>
+      <div class="config-body">
+
+        <div>
+          <label for="venue">Venue ID</label>
+          <input type="text" id="venue" value="ICLR.cc/2026/Conference" />
+          <div class="hint">e.g. ICLR.cc/2026/Conference or NeurIPS.cc/2025/Conference</div>
+        </div>
+
+        <div>
+          <label for="maxPapers">Max papers <span style="font-weight:400;color:#9ca3af">(blank = all)</span></label>
+          <input type="number" id="maxPapers" min="1" placeholder="e.g. 10" />
+        </div>
+
+        <div>
+          <label for="delay">Delay between requests (s)</label>
+          <input type="number" id="delay" value="0.3" min="0" step="0.1" />
+        </div>
+
+        <details>
+          <summary>Authentication (optional)</summary>
+          <div class="details-body">
+            <div>
+              <label for="username">OpenReview email</label>
+              <input type="email" id="username" placeholder="you@email.com" autocomplete="username" />
+            </div>
+            <div>
+              <label for="password">Password</label>
+              <input type="password" id="password" autocomplete="current-password" />
+            </div>
+            <div class="hint">Required for non-public venues or full review access.</div>
+          </div>
+        </details>
+
+        <div class="btn-row">
+          <button id="pullBtn" onclick="startPull()">Pull &amp; Analyze</button>
+          <button id="stopBtn" onclick="stopPull()">Stop</button>
+          <div class="spinner" id="spinner"></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Right column ─────────────────────────────────────────────────── -->
+    <div class="right">
+
+      <!-- Progress -->
+      <div class="progress-card">
+        <div class="progress-header">
+          Progress
+          <progress id="progressBar" value="0" max="1"></progress>
+          <span id="progressPct">—</span>
+        </div>
+        <div id="log"><span style="color:#cbd5e1">Configure and click "Pull &amp; Analyze" to start.</span></div>
+      </div>
+
+      <!-- Summary stats (shown after done) -->
+      <div id="summaryBar"
+        style="display:none; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:.8rem 1.2rem; display:none; gap:2rem; flex-wrap:wrap;">
+        <div class="stat-block">
+          <div class="num" id="statPapers">—</div>
+          <div class="lbl">Papers processed</div>
+        </div>
+        <div class="stat-block">
+          <div class="num" id="statPapersWithHits">—</div>
+          <div class="lbl">Papers with subjective content</div>
+        </div>
+        <div class="stat-block">
+          <div class="num" id="statSentences">—</div>
+          <div class="lbl">Subjective sentences</div>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="legend">
+        <div class="legend-item"><span class="dot author_claim"></span>Author claim</div>
+        <div class="legend-item"><span class="dot reviewer_belief"></span>Reviewer belief</div>
+        <div class="legend-item"><span class="dot positive"></span>Positive</div>
+        <div class="legend-item"><span class="dot negative"></span>Negative</div>
+        <div class="legend-item"><span class="dot positioning"></span>Positioning</div>
+        <div class="legend-item"><span class="dot hedging"></span>Hedging</div>
+        <div class="legend-item"><span class="dot enthusiasm"></span>Enthusiasm</div>
+      </div>
+
+      <!-- Results -->
+      <div id="results">
+        <div class="empty-results" id="emptyMsg">Results will appear here as papers are processed.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let es = null;
+    let papersWithHits = 0;
+
+    function escHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function appendLog(msg, cls = "") {
+      const log = document.getElementById("log");
+      const line = document.createElement("div");
+      if (cls) line.className = cls;
+      line.textContent = msg;
+      log.appendChild(line);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function buildSentenceHtml(seg) {
+      if (!seg.subjective) {
+        return `<span class="sentence">${escHtml(seg.text)}</span>`;
+      }
+      const matches = [...seg.matches].sort((a, b) => a.start - b.start);
+      let html = "";
+      let pos = 0;
+      for (const m of matches) {
+        if (m.start < pos) continue;
+        html += escHtml(seg.text.slice(pos, m.start));
+        html += `<mark class="${m.category}" title="${m.category}">${escHtml(m.text)}</mark>`;
+        pos = m.end;
+      }
+      html += escHtml(seg.text.slice(pos));
+      return `<span class="sentence sentence-subj">${html}</span>`;
+    }
+
+    function renderPaper(paper) {
+      const totalSubj = paper.reviews.reduce(
+        (s, r) => s + r.fields.reduce((s2, f) => s2 + f.stats.subjective, 0), 0
+      );
+
+      document.getElementById("emptyMsg")?.remove();
+
+      const card = document.createElement("div");
+      card.className = "paper-card";
+
+      const badgeCls = totalSubj === 0 ? "paper-badge zero" : "paper-badge";
+      const badgeLabel = totalSubj === 0
+        ? "no subjective content"
+        : `${totalSubj} subjective sentence${totalSubj !== 1 ? "s" : ""}`;
+
+      card.innerHTML = `
+      <div class="paper-title-row" onclick="toggleCard(this)">
+        <svg class="chevron" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M7.293 4.293a1 1 0 011.414 0L14 9.586a1 1 0 010 1.414l-5.293 5.293a1 1 0 01-1.414-1.414L11.586 10 7.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+        </svg>
+        <span class="paper-title">${escHtml(paper.title)}</span>
+        <span class="${badgeCls}">${badgeLabel}</span>
+      </div>
+      <div class="paper-body"></div>`;
+
+      const body = card.querySelector(".paper-body");
+
+      if (paper.reviews.length === 0 || totalSubj === 0) {
+        body.innerHTML = `<div style="color:#94a3b8;font-size:.82rem;padding:.25rem 0;">No subjective content detected in any review.</div>`;
+      } else {
+        papersWithHits++;
+        for (const review of paper.reviews) {
+          const rb = document.createElement("div");
+          rb.className = "reviewer-block";
+          rb.innerHTML = `<div class="reviewer-name">${escHtml(review.reviewer)}</div>`;
+
+          for (const f of review.fields) {
+            const fb = document.createElement("div");
+            fb.className = "field-block";
+            fb.innerHTML = `<div class="field-label">${escHtml(f.field)}</div>`;
+
+            const sentences = f.segments
+              .filter(s => s.subjective)
+              .map(s => buildSentenceHtml(s))
+              .join("\n");
+            fb.insertAdjacentHTML("beforeend", sentences);
+            rb.appendChild(fb);
+          }
+          body.appendChild(rb);
+        }
+      }
+
+      document.getElementById("results").appendChild(card);
+    }
+
+    function toggleCard(titleRow) {
+      const body = titleRow.nextElementSibling;
+      const chevron = titleRow.querySelector(".chevron");
+      const isOpen = body.classList.contains("open");
+      body.classList.toggle("open", !isOpen);
+      chevron.classList.toggle("open", !isOpen);
+      titleRow.classList.toggle("open", !isOpen);
+    }
+
+    function setRunning(running) {
+      document.getElementById("pullBtn").disabled = running;
+      document.getElementById("stopBtn").style.display = running ? "inline-block" : "none";
+      document.getElementById("spinner").style.display = running ? "block" : "none";
+    }
+
+    function startPull() {
+      const venue = document.getElementById("venue").value.trim();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const maxPapers = document.getElementById("maxPapers").value.trim();
+      const delay = document.getElementById("delay").value.trim();
+
+      if (!venue) { alert("Please enter a venue ID."); return; }
+
+      // Reset state
+      papersWithHits = 0;
+      document.getElementById("log").innerHTML = "";
+      document.getElementById("results").innerHTML = '<div class="empty-results" id="emptyMsg">Results will appear here as papers are processed.</div>';
+      document.getElementById("summaryBar").style.display = "none";
+      document.getElementById("progressBar").value = 0;
+      document.getElementById("progressBar").max = 1;
+      document.getElementById("progressPct").textContent = "—";
+
+      const params = new URLSearchParams({ venue, delay });
+      if (username) params.set("username", username);
+      if (password) params.set("password", password);
+      if (maxPapers) params.set("max_papers", maxPapers);
+
+      setRunning(true);
+      es = new EventSource(`/stream-reviews?${params}`);
+
+      es.addEventListener("status", e => {
+        appendLog(JSON.parse(e.data).message);
+      });
+
+      es.addEventListener("total", e => {
+        const { total } = JSON.parse(e.data);
+        document.getElementById("progressBar").max = total;
+        appendLog(`Processing ${total} paper(s)…`);
+      });
+
+      es.addEventListener("progress", e => {
+        const { idx, total, title } = JSON.parse(e.data);
+        document.getElementById("progressBar").value = idx;
+        document.getElementById("progressPct").textContent = `${idx} / ${total}`;
+        appendLog(`[${idx}/${total}] ${title}`);
+      });
+
+      es.addEventListener("paper", e => {
+        renderPaper(JSON.parse(e.data));
+        const cur = parseInt(document.getElementById("statPapersWithHits").textContent) || 0;
+        document.getElementById("statPapersWithHits").textContent = papersWithHits;
+      });
+
+      es.addEventListener("done", e => {
+        const { total_papers, total_sentences } = JSON.parse(e.data);
+        appendLog(`Done. ${total_sentences} subjective sentences found across ${total_papers} papers.`, "log-done");
+        document.getElementById("progressBar").value = document.getElementById("progressBar").max;
+        document.getElementById("progressPct").textContent = "done";
+
+        document.getElementById("statPapers").textContent = total_papers;
+        document.getElementById("statPapersWithHits").textContent = papersWithHits;
+        document.getElementById("statSentences").textContent = total_sentences;
+        document.getElementById("summaryBar").style.display = "flex";
+
+        es.close(); es = null;
+        setRunning(false);
+      });
+
+      es.addEventListener("error", e => {
+        if (e.data) appendLog("Error: " + JSON.parse(e.data).message, "log-error");
+        es.close(); es = null;
+        setRunning(false);
+      });
+
+      es.onerror = () => {
+        if (es) { es.close(); es = null; }
+        setRunning(false);
+      };
+    }
+
+    function stopPull() {
+      if (es) { es.close(); es = null; }
+      appendLog("Stopped by user.");
+      setRunning(false);
+    }
+  </script>
+</body>
+
+</html>
