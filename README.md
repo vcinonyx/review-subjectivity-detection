@@ -34,7 +34,7 @@ Opinion_Analysis/
 
 ### `data/eval_dataset.csv`
 
-The evaluation dataset collected from ICLR 2026 peer reviews via the OpenReview API. It contains sentences classified as either **subjective** or **objective**. Subjective sentences are those that contain at least one of a predefined set of linguistic markers (e.g. hedges, reviewer beliefs, author claims, evaluative language). Objective sentences are those with no match against these keyword patterns. Columns include: `paper_id`, `paper_title`, `reviewer`, `field`, `sentence`, `matched_markers`, and `label`.
+The evaluation dataset collected from ICLR 2026 peer reviews via the OpenReview API. It contains sentences classified as either **subjective** or **objective**. Subjective sentences are those that contain at least one of a predefined set of linguistic markers (e.g. hedges, reviewer beliefs, evaluative language). Objective sentences are those with no match against these keyword patterns. Columns include: `paper_id`, `paper_title`, `reviewer`, `field`, `sentence`, `matched_markers`, and `label`.
 
 ### `data/test_dataset.csv`
 
@@ -46,11 +46,11 @@ A curated subset of 100 sentences drawn from `eval_dataset.csv`, used as the hel
 
 ### `mdeberta_subjectivity_eval.ipynb`
 
-Evaluates the [`GroNLP/mdebertav3-subjectivity-english`](https://huggingface.co/GroNLP/mdebertav3-subjectivity-english) model — a fine-tuned mDeBERTa v3 classifier for subjectivity detection in English. The notebook runs inference on `test_dataset.csv`, records the predicted label and confidence score for each sentence, and evaluates performance against the gold labels.
+Evaluates the [`GroNLP/mdebertav3-subjectivity-english`](https://huggingface.co/GroNLP/mdebertav3-subjectivity-english) model — a fine-tuned mDeBERTa v3 classifier for subjectivity detection in English.
 
 ### `qwen_subjectivity_eval.ipynb`
 
-Evaluates three sizes of the Qwen3 instruction-tuned LLM family — **1.7B**, **8B**, and **14B** — on the same test set. Each model is prompted to classify each sentence as subjective or objective and to provide a reasoning chain and natural-language explanation alongside its prediction. Results are compared across model sizes to assess how scale affects classification quality.
+Evaluates three sizes of the Qwen3 instruction-tuned LLM family: **1.7B**, **8B**, and **14B**. Each model is prompted to classify each sentence as subjective or objective and to provide a reasoning chain and natural-language explanation alongside its prediction.
 
 ---
 
@@ -68,11 +68,11 @@ Output from each Qwen3 model. Columns: `sentence`, `ground_truth`, `label` (pred
 
 ### `disagreements.csv`
 
-Sentences where the three Qwen models did not agree with one another on the predicted label. Useful for identifying ambiguous or borderline cases.
+Sentences where the three Qwen models did not agree with one another on the predicted label.
 
 ### `unanimous_wrong.csv`
 
-Sentences where all three Qwen models agreed on a prediction but were collectively wrong relative to the gold label. Highlights systematic failure cases shared across model sizes.
+Sentences where all three Qwen models agreed on a prediction but were collectively wrong relative to the gold label.
 
 ---
 
@@ -82,8 +82,9 @@ Sentences where all three Qwen models agreed on a prediction but were collective
 
 **Features:**
 
-- **Text analysis** — paste any review text and receive sentence-level subjectivity labels, with matched keyword markers highlighted and categorised (e.g. hedging, reviewer belief, author claim, evaluative language).
-- **Live OpenReview streaming** — enter a conference venue and stream peer reviews directly from the OpenReview API, with subjective sentences extracted and displayed in real time.
+- **Text analysis** — paste any review text and receive sentence-level subjectivity labels, with matched keyword markers highlighted.
+
+- **Live OpenReview streaming** — enter a conference venue and stream peer reviews directly from the OpenReview API, with subjective sentences extracted and displayed.
 
 Run locally with:
 
